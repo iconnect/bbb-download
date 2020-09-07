@@ -14,25 +14,18 @@ import time
 
 # Catch exception so that the script can be also called manually like: python download.py meetingId,
 # in addition to being called from the bbb control scripts.
-tmp = sys.argv[1].split('-')
-try:
-    if tmp[2] == 'presentation':
-        meetingId = tmp[0] + '-' + tmp[1]
-    else:
-        sys.exit()
-except IndexError:
-    meetingId = sys.argv[1]
+assetsPath = sys.argv[1]
 
-PATH = '/var/bigbluebutton/published/presentation/'
-LOGS = '/var/log/bigbluebutton/download/'
-source_dir = PATH + meetingId + "/"
+ASSETS_PATH = assetsPath
+LOGS = ASSETS_PATH + "/log"
+source_dir = ASSETS_PATH + "/"
 temp_dir = source_dir + 'temp/'
 target_dir = source_dir + 'download/'
 audio_path = 'audio/'
 events_file = 'shapes.svg'
-LOGFILE = LOGS + meetingId + '.log'
+LOGFILE = LOGS + "/preprocessing.log"
 ffmpeg.set_logfile(LOGFILE)
-source_events = '/var/bigbluebutton/recording/raw/' + meetingId + '/events.xml'
+source_events = ASSETS_PATH + '/events.xml'
 # Deskshare
 SOURCE_DESKSHARE = source_dir + 'deskshare/deskshare.webm'
 TMP_DESKSHARE_FILE = temp_dir + 'deskshare.mp4'
@@ -204,7 +197,7 @@ def get_different_presentations(dictionary):
         # ?if t < 1:
         # ?    continue
 
-        name = dictionary[t].split("/")[7]
+        name = dictionary[t].split("/")[-1]
         # debug
         print >> sys.stderr, "name"
         print >> sys.stderr, (name)
@@ -233,19 +226,6 @@ def copy_mp4(result, dest):
         shutil.copy2(result, dest)
 
 
-def zipdir(path):
-    filename = meetingId + '.zip'
-    zipf = zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED)
-    for root, dirs, files in os.walk(path):
-        for f in files:
-            zipf.write(os.path.join(root, f))
-    zipf.close()
-
-    # Create symlink instead so that files are deleted
-    # if not os.path.exists('/var/bigbluebutton/playback/presentation/download/' + filename):
-    #    os.symlink(source_dir + filename, '/var/bigbluebutton/playback/presentation/download/' + filename)
-
-
 def bbbversion():
     global bbb_ver
     bbb_ver = 0
@@ -256,6 +236,8 @@ def bbbversion():
 
 
 def main():
+    if not os.path.exists(LOGS):
+        os.makedirs(LOGS)
     sys.stderr = open(LOGFILE, 'a')
     print >> sys.stderr, "\n<-------------------" + time.strftime("%c") + "----------------------->\n"
 
@@ -276,8 +258,7 @@ def main():
         ffmpeg.trim_audio_start(dictionary, length, audio, audio_trimmed)
         ffmpeg.mux_slideshow_audio(slideshow, audio_trimmed, result)
         serve_webcams()
-        # zipdir('./download/')
-        copy_mp4(result, source_dir + meetingId + '.mp4')
+        copy_mp4(result, source_dir + "master.mp4")
     finally:
         print >> sys.stderr, "Cleaning up temp files..."
         cleanup()

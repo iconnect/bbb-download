@@ -5,7 +5,7 @@ import os
 import shutil
 
 # FFMPEG = 'ffmpeg'
-FFMPEG = '/opt/ffmpeg/ffmpeg'
+FFMPEG = 'ffmpeg -loglevel verbose '
 # FFMPEG = '/root/bin/ffmpeg'
 VID_ENCODER = 'libx264'
 
@@ -110,7 +110,7 @@ def trim_video_start(dictionary, length, full_vid, video_trimmed):
 
 
 def mp3_to_aac(mp3_file, aac_file):
-    command = '%s -i %s -c:a libfdk_aac %s 2>> %s' % (FFMPEG, mp3_file, aac_file, logfile)
+    command = '%s -i %s -c:a aac %s 2>> %s' % (FFMPEG, mp3_file, aac_file, logfile)
     os.system(command)
 
 
