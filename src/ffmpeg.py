@@ -4,9 +4,7 @@ __author__ = 'CreateWebinar.com'
 import os
 import shutil
 
-# FFMPEG = 'ffmpeg'
 FFMPEG = 'ffmpeg -loglevel verbose '
-# FFMPEG = '/root/bin/ffmpeg'
 VID_ENCODER = 'libx264'
 
 
@@ -25,6 +23,17 @@ def extract_audio_from_video(video_file, out_file):
     command = '%s -i %s -ab 160k -ac 2 -ar 44100 -vn %s 2>> %s' % (FFMPEG, video_file, out_file, logfile)
     os.system(command)
 
+# "-filter_complex '[2:v]setpts=PTS-STARTPTS,pad=iw*2:ih:color=white[l];[3:v]setpts=PTS-STARTPTS[r];[l][r]overlay=x=W-w:shortest=1[vout] -map [vout] "
+
+
+def dual_view_from(left_part, right_part, out_file):
+    if os.path.exists(right_part):
+        left_filter = 'setpts=PTS-STARTPTS,pad=iw*2:ih:color=white'
+        right_filter = 'scale2ref=w=iw/2:h=ih'
+        combined_filter = 'overlay=x=W-w:shortest=1'
+        filter_complex = '[0:v]%s[ref];[1:v]setpts=PTS-STARTPTS[2nd];[2nd][ref]%s[r][l];[l][r]%s[vout]' % (left_filter, right_filter, combined_filter)
+        command = '%s -i %s -i %s -filter_complex "%s" -map [vout] -map 0:a -aspect 32:9 %s 2>> %s' % (FFMPEG, left_part, right_part, filter_complex, out_file, logfile)
+        os.system(command)
 
 def create_video_from_image(image, duration, out_file):
     print "*************** create_video_from_image ******************"

@@ -29,6 +29,7 @@ source_events = ASSETS_PATH + '/events.xml'
 # Deskshare
 SOURCE_DESKSHARE = source_dir + 'deskshare/deskshare.webm'
 TMP_DESKSHARE_FILE = temp_dir + 'deskshare.mp4'
+SOURCE_WEBCAMS   = source_dir + 'video/webcams.webm'
 
 
 def extract_timings(bbb_version):
@@ -170,7 +171,7 @@ def prepare(bbb_version):
         global audio_path
         audio_path = temp_dir + 'audio/'
         os.mkdir(audio_path)
-        ffmpeg.extract_audio_from_video('video/webcams.webm', audio_path + 'audio.ogg')
+        ffmpeg.extract_audio_from_video(SOURCE_WEBCAMS, audio_path + 'audio.ogg')
 
     shutil.copytree("presentation", temp_dir + "presentation")
     dictionary, length = extract_timings(bbb_version)
@@ -250,14 +251,15 @@ def main():
 
     audio = audio_path + 'audio.ogg'
     audio_trimmed = temp_dir + 'audio_trimmed.m4a'
+    left_part = target_dir + 'left.mp4'
     result = target_dir + 'meeting.mp4'
     slideshow = temp_dir + 'slideshow.mp4'
 
     try:
         create_slideshow(dictionary, length, slideshow, bbb_version)
         ffmpeg.trim_audio_start(dictionary, length, audio, audio_trimmed)
-        ffmpeg.mux_slideshow_audio(slideshow, audio_trimmed, result)
-        serve_webcams()
+        ffmpeg.mux_slideshow_audio(slideshow, audio_trimmed, left_part)
+        ffmpeg.dual_view_from(left_part, SOURCE_WEBCAMS, result)
         copy_mp4(result, source_dir + "master.mp4")
     finally:
         print >> sys.stderr, "Cleaning up temp files..."
